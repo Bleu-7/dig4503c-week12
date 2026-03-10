@@ -1,0 +1,26 @@
+.landing {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 100vh;
+  max-width: 680px;
+  padding: 0 2rem;
+}
+
+.title {
+  font-size: 4rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #a78bfa;
+  margin: 0 0 1.25rem 0;
+  line-height: 1;
+}
+
+.description {
+  font-size: 1.125rem;
+  line-height: 1.75;
+  color: #a1a1aa;
+  margin: 0;
+  max-width: 560px;
+}

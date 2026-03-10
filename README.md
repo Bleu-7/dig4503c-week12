@@ -14,8 +14,8 @@ A Letterboxd-style web application for discovering, logging, and reviewing video
 
 ## Tech Stack
 
-Front-End: **React + Vite**
-Styling: **Tailwind CSS + shadcn/ui**
-Data (MVP): **localStorage (abstracted behind a service layer)**
-Back-End Data (Post-MVP): **Supabase (migration-ready by design)**
-Game Data API: **IGDB (preferred) or RAWG**
+- Front-End: **React + Vite**
+- Styling: **Tailwind CSS + shadcn/ui**
+- Data (MVP): **localStorage (abstracted behind a service layer)**
+- Back-End Data (Post-MVP): **Supabase (migration-ready by design)**
+- Game Data API: **IGDB (preferred) or RAWG**

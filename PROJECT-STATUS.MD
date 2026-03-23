@@ -11,9 +11,11 @@
 ## Currently Implemented Features
 - **Game Search & Database Integration** — Connect to IGDB or RAWG API for game data
 - **Game Logging** — Add games with status: Played / Playing / Want to Play
+- **Ratings & Reviews** — Rate games (1–10 or star system) with optional text review
+- **User Accounts & Authentication** — Sign up, log in, user profiles
 
 ## Next Feature to be Implemented
-- **Ratings & Reviews** — Rate games (1–10 or star system) with optional text review
+- **User Profile Page** — Public-facing page showing a user's logged games, ratings, and reviews
 
 ## Current Bugs
 - None yet.
@@ -23,11 +25,11 @@
 
 - Activity feed (recent logs/reviews from followed users)
 - Following / social graph
-- Trending / popular games this week
-- Custom lists (e.g. "Top 10 RPGs")
+- *Trending / popular games this week*
+- *Custom lists (e.g. "Top 10 RPGs")*
 - Completion tracking (hours played, platform, completion %)
 - Backlog management and prioritization
-- Game recommendations based on ratings
+- *Game recommendations based on ratings*
 - Achievement/badge system
 - Game diary (log replays with dates)
 - Stats dashboard (games per genre, avg rating, most active month)

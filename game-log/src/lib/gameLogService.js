@@ -1,6 +1,16 @@
-const STORAGE_KEY = 'logged_games'
+import { getCurrentUser } from '@/lib/authService'
 
 const VALID_STATUSES = new Set(['Played', 'Playing', 'Want to Play'])
+
+/**
+ * Returns the localStorage key scoped to the current user.
+ * Throws if no user is logged in.
+ */
+function getStorageKey() {
+  const user = getCurrentUser()
+  if (!user) throw new Error('Not logged in.')
+  return `logged_games_${user.id}`
+}
 
 /**
  * @typedef {'Played' | 'Playing' | 'Want to Play'} GameStatus
@@ -11,7 +21,7 @@ const VALID_STATUSES = new Set(['Played', 'Playing', 'Want to Play'])
  */
 
 /**
- * @typedef {{ id: number, name: string, coverUrl: string|null, releaseYear: string|null, status: GameStatus, addedAt: string, rating: number|null, review: string|null }} LoggedGame
+ * @typedef {{ id: number, name: string, coverUrl: string|null, releaseYear: string|null, status: GameStatus, addedAt: string, rating: number|null, review: string|null, reviewedAt: string|null }} LoggedGame
  */
 
 /**
@@ -20,12 +30,13 @@ const VALID_STATUSES = new Set(['Played', 'Playing', 'Want to Play'])
  */
 export function getGames() {
   try {
-    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY))
+    const parsed = JSON.parse(localStorage.getItem(getStorageKey()))
     if (!Array.isArray(parsed)) return []
     return parsed.filter((g) => g && typeof g === 'object' && typeof g.id === 'number').map((g) => ({
       ...g,
       rating: typeof g.rating === 'number' ? g.rating : null,
       review: typeof g.review === 'string' ? g.review : null,
+      reviewedAt: typeof g.reviewedAt === 'string' ? g.reviewedAt : null,
     }))
   } catch {
     return []
@@ -55,10 +66,11 @@ export function addGame(game, status) {
     addedAt: new Date().toISOString(),
     rating: null,
     review: null,
+    reviewedAt: null,
   }
 
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([...games, entry]))
+    localStorage.setItem(getStorageKey(), JSON.stringify([...games, entry]))
   } catch (err) {
     throw new Error(`Failed to save game: ${err.message}`)
   }
@@ -87,7 +99,7 @@ export function updateStatus(id, status) {
   if (!updated) return null
 
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    localStorage.setItem(getStorageKey(), JSON.stringify(next))
   } catch (err) {
     throw new Error(`Failed to update status: ${err.message}`)
   }
@@ -112,14 +124,14 @@ export function updateReview(id, rating, review) {
 
   const next = games.map((g) => {
     if (g.id !== id) return g
-    updated = { ...g, rating: rating ?? null, review: review ?? null }
+    updated = { ...g, rating: rating ?? null, review: review ?? null, reviewedAt: new Date().toISOString() }
     return updated
   })
 
   if (!updated) return null
 
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    localStorage.setItem(getStorageKey(), JSON.stringify(next))
   } catch (err) {
     throw new Error(`Failed to update review: ${err.message}`)
   }
@@ -139,7 +151,7 @@ export function removeGame(id) {
   if (next.length === games.length) return false
 
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    localStorage.setItem(getStorageKey(), JSON.stringify(next))
   } catch (err) {
     throw new Error(`Failed to remove game: ${err.message}`)
   }

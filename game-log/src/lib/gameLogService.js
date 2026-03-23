@@ -11,7 +11,7 @@ const VALID_STATUSES = new Set(['Played', 'Playing', 'Want to Play'])
  */
 
 /**
- * @typedef {{ id: number, name: string, coverUrl: string|null, releaseYear: string|null, status: GameStatus, addedAt: string }} LoggedGame
+ * @typedef {{ id: number, name: string, coverUrl: string|null, releaseYear: string|null, status: GameStatus, addedAt: string, rating: number|null, review: string|null }} LoggedGame
  */
 
 /**
@@ -21,7 +21,12 @@ const VALID_STATUSES = new Set(['Played', 'Playing', 'Want to Play'])
 export function getGames() {
   try {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY))
-    return Array.isArray(parsed) ? parsed : []
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter((g) => g && typeof g === 'object' && typeof g.id === 'number').map((g) => ({
+      ...g,
+      rating: typeof g.rating === 'number' ? g.rating : null,
+      review: typeof g.review === 'string' ? g.review : null,
+    }))
   } catch {
     return []
   }
@@ -48,6 +53,8 @@ export function addGame(game, status) {
     releaseYear: game.releaseYear,
     status,
     addedAt: new Date().toISOString(),
+    rating: null,
+    review: null,
   }
 
   try {
@@ -83,6 +90,38 @@ export function updateStatus(id, status) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
   } catch (err) {
     throw new Error(`Failed to update status: ${err.message}`)
+  }
+
+  return updated
+}
+
+/**
+ * Update the rating and review of a logged game.
+ * @param {number} id - The game's id.
+ * @param {number|null} rating - A value from 1–10, or null to clear.
+ * @param {string|null} review - Review text, or null to clear.
+ * @returns {LoggedGame|null} The updated entry, or null if not found.
+ */
+export function updateReview(id, rating, review) {
+  if (rating !== null && (!Number.isFinite(rating) || !Number.isInteger(rating) || rating < 1 || rating > 10)) {
+    throw new Error(`Invalid rating: ${rating}. Must be an integer 1–10 or null.`)
+  }
+
+  const games = getGames()
+  let updated = null
+
+  const next = games.map((g) => {
+    if (g.id !== id) return g
+    updated = { ...g, rating: rating ?? null, review: review ?? null }
+    return updated
+  })
+
+  if (!updated) return null
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+  } catch (err) {
+    throw new Error(`Failed to update review: ${err.message}`)
   }
 
   return updated

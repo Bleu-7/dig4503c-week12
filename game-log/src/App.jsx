@@ -1,11 +1,14 @@
 import { useState, useCallback, useRef } from 'react'
 import { searchGames } from '@/lib/gameSearchService'
+import { addGame } from '@/lib/gameLogService'
 import SearchBar from '@/components/SearchBar'
 import SearchResults from '@/components/SearchResults'
+import GameLog from '@/components/GameLog'
 
 function App() {
   const [results, setResults] = useState([])
   const [error, setError] = useState(null)
+  const [refreshKey, setRefreshKey] = useState(0)
   const latestQueryRef = useRef('')
   const lastSearchedRef = useRef('')
 
@@ -39,7 +42,18 @@ function App() {
       <h1>GameLog</h1>
       <SearchBar onSearch={handleSearch} />
       {error && <p>{error}</p>}
-      <SearchResults results={results} />
+      <SearchResults
+        results={results}
+        onLog={(game, status) => {
+          try {
+            addGame(game, status)
+            setRefreshKey((k) => k + 1)
+          } catch (err) {
+            console.error(err)
+          }
+        }}
+      />
+      <GameLog refreshKey={refreshKey} />
     </div>
   )
 }

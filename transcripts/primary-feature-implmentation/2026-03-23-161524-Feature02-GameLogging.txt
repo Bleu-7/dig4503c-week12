@@ -1,0 +1,671 @@
+╭─── Claude Code v2.1.81 ──────────────────────────────────────────────────────╮
+│                                                    │ Tips for getting        │
+│                  Welcome back J.!                  │ started                 │
+│                                                    │ Run /init to create a … │
+│                       ▐▛███▜▌                      │ ─────────────────────── │
+│                      ▝▜█████▛▘                     │ Recent activity         │
+│                        ▘▘ ▝▝                       │ No recent activity      │
+│    Sonnet 4.6 · Claude Pro · jo591696@ucf.edu's    │                         │
+│    Organization                                    │                         │
+│        ~/claude-projects/week8/midterm-setup       │                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+❯ Read @PROJECT-STATUS.MD and @"Implementation Plan.md" to understand the       
+current state of the project, technical details, and styling details. Break the 
+ "Next Feature to be Implemented" item into smaller  steps that can each be     
+tested in under ten minutes.                                                    
+  ⎿  Read Implementation Plan.md (102 lines)
+  ⎿  Read PROJECT-STATUS.MD (32 lines)
+
+⏺ Explore(Explore current codebase structure)
+  ⎿  Done (21 tool uses · 30.2k tokens · 1m 49s)
+  (ctrl+o to expand)
+
+⏺ Here's the breakdown. Each step builds on the previous and can be manually
+  verified in the browser in under 10 minutes.
+
+  ---
+  Game Logging — Implementation Steps
+
+  Context: No service layer or persistence exists yet. The game data shape from
+  RAWG is { id, name, coverUrl, releaseYear }.
+
+  ---
+  Step 1 — Create lib/gameLogService.js
+
+  Write the four CRUD functions: addGame(game, status), getGames(),
+  updateStatus(id, status), removeGame(id). All operate on a logged_games key in
+   localStorage. Include an id field generated from Date.now().
+
+  Test: In the browser DevTools console, manually import and call addGame(...)
+  and getGames(). Verify the entry appears in localStorage under logged_games.
+
+  ---
+  Step 2 — Add an "Add to Log" button in SearchResults.jsx
+
+  Each result row gets an onLog(game) callback prop. Wire a button to it —
+  clicking logs the game with a default status of "Want to Play".
+
+  Test: Search for a game, click the button on one result, open DevTools →
+  Application → Local Storage and confirm the entry is there.
+
+  ---
+  Step 3 — Create GameLog.jsx and render it in App.jsx
+
+  Build a simple list component that calls getGames() on mount and displays each
+   entry: cover thumbnail, name, release year, and a status badge. Render it
+  below the search results in App.jsx.
+
+  Test: Repeat Step 2, then confirm the logged game appears in the on-screen
+  list without a page refresh.
+
+  ---
+  Step 4 — Replace the "Add to Log" button with a status picker
+
+  Swap the single button for an inline <select> (Played / Playing / Want to
+  Play) plus a confirm button. Pass the selected status to addGame.
+
+  Test: Log three games with three different statuses. Verify the correct status
+   badge appears for each in GameLog.
+
+  ---
+  Step 5 — Add remove and status-update controls to GameLog.jsx
+
+  Each logged game row gets a status <select> (calling updateStatus on change)
+  and a remove button (calling removeGame and refreshing the list).
+
+  Test: Change a game's status and confirm the badge updates. Remove a game and
+  confirm it disappears from the list and from localStorage.
+
+✻ Baked for 1m 6s
+
+❯ Lets properly implement step 1 as originally described. Focus only on this    
+step. Do not implement anything from future steps yet.                          
+
+  Read 1 file (ctrl+o to expand)
+  ⎿  Interrupted · What should Claude do instead?
+
+❯ Let's begin by properly implementing step 1. Focus only on this step. Do not  
+implement anything from future steps yet.                                       
+
+⏺ Write(game-log/src/lib/gameLogService.js)
+  ⎿  Wrote 83 lines to game-log/src/lib/gameLogService.js
+      1 const STORAGE_KEY = 'logged_games'
+      2 
+      3 /**
+      4  * @typedef {'Played' | 'Playing' | 'Want to Play'} GameStatus
+      5  */
+      6 
+      7 /**
+      8  * @typedef {{ id: number, name: string, coverUrl: string|null, r
+        eleaseYear: string|null }} Game
+      9  */
+     … +73 lines (ctrl+o to expand)
+
+⏺ Done. To test it in DevTools console:
+
+  // Import isn't available directly in console, but you can paste these
+  // or use the app's module context. Quickest approach:
+
+  // 1. Manually set a game in localStorage to test getGames()
+  localStorage.setItem('logged_games', JSON.stringify([]))
+
+  // 2. Simulate addGame
+  const game = { id: 1, name: 'Hollow Knight', coverUrl: null, releaseYear:
+  '2017' }
+  const entry = { ...game, status: 'Want to Play', addedAt: new
+  Date().toISOString() }
+  localStorage.setItem('logged_games', JSON.stringify([entry]))
+  JSON.parse(localStorage.getItem('logged_games'))  // should show the entry
+
+  // 3. Verify Application → Local Storage → logged_games in DevTools
+
+  Once Step 2 wires up actual imports, addGame/getGames will be callable
+  directly from the running module context.
+
+❯ Let's now properly implement step 2. Focus only on this step. Do not          
+implement anything from future steps yet.                                       
+
+  Read 2 files (ctrl+o to expand)
+
+⏺ Update(game-log/src/components/SearchResults.jsx)
+  ⎿  Added 2 lines, removed 1 line
+      1 -function SearchResults({ results = [] }) {                      
+      1 +function SearchResults({ results = [], onLog }) {               
+      2    return (
+      3      <ul>
+      4        {results.map((game) => (
+     ...
+       8            )}
+       9            <span>{game.name}</span>
+      10            {game.releaseYear && <span> ({game.releaseYear})</spa
+          n>}
+      11 +          <button onClick={() => onLog(game)}>Add to Log</butto
+         +n>                                                             
+      12          </li>
+      13        ))}
+      14      </ul>
+
+⏺ Update(game-log/src/App.jsx)
+  ⎿  Added 1 line
+      1  import { useState, useCallback, useRef } from 'react'
+      2  import { searchGames } from '@/lib/gameSearchService'
+      3 +import { addGame } from '@/lib/gameLogService'                  
+      4  import SearchBar from '@/components/SearchBar'
+      5  import SearchResults from '@/components/SearchResults'
+      6  
+
+⏺ Update(game-log/src/App.jsx)
+  ⎿  Added 1 line, removed 1 line
+      40        <h1>GameLog</h1>
+      41        <SearchBar onSearch={handleSearch} />
+      42        {error && <p>{error}</p>}
+      43 -      <SearchResults results={results} />                      
+      43 +      <SearchResults results={results} onLog={(game) => addGame
+         +(game, 'Want to Play')} />                                     
+      44      </div>
+      45    )
+      46  }
+
+⏺ To test: search for a game, click "Add to Log" on any result, then in
+  DevTools:
+
+  JSON.parse(localStorage.getItem('logged_games'))
+  // Should show an array with the game entry and status: "Want to Play"
+
+  Clicking the same game again won't add a duplicate — addGame no-ops if the id
+  already exists.
+
+❯ Let's now properly implement step 3. Focus only on this step. Do not          
+implement anything from future steps yet.                                       
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Write(game-log/src/components/GameLog.jsx)
+  ⎿  Wrote 29 lines to game-log/src/components/GameLog.jsx
+      1 import { useState, useEffect } from 'react'
+      2 import { getGames } from '@/lib/gameLogService'
+      3 
+      4 function GameLog({ refreshKey }) {
+      5   const [games, setGames] = useState([])
+      6 
+      7   useEffect(() => {
+      8     setGames(getGames())
+      9   }, [refreshKey])
+     … +19 lines (ctrl+o to expand)
+
+⏺ Now wire it into App.jsx. A refreshKey counter is the simplest way to tell
+  GameLog to re-read localStorage after a game is logged.
+
+⏺ Update(game-log/src/App.jsx)
+  ⎿  Added 1 line
+      3  import { addGame } from '@/lib/gameLogService'
+      4  import SearchBar from '@/components/SearchBar'
+      5  import SearchResults from '@/components/SearchResults'
+      6 +import GameLog from '@/components/GameLog'                      
+      7  
+      8  function App() {
+      9    const [results, setResults] = useState([])
+
+⏺ Update(game-log/src/App.jsx)
+  ⎿  Added 1 line
+       8  function App() {
+       9    const [results, setResults] = useState([])
+      10    const [error, setError] = useState(null)
+      11 +  const [refreshKey, setRefreshKey] = useState(0)              
+      12    const latestQueryRef = useRef('')
+      13    const lastSearchedRef = useRef('')
+      14  
+
+⏺ Update(game-log/src/App.jsx)  ⎿  Added 5 lines, removed 1 line
+      42        <h1>GameLog</h1>
+      43        <SearchBar onSearch={handleSearch} />
+      44        {error && <p>{error}</p>}
+      45 -      <SearchResults results={results} onLog={(game) => addGame
+         -(game, 'Want to Play')} />                                     
+      45 +      <SearchResults                                           
+      46 +        results={results}                                      
+      47 +        onLog={(game) => { addGame(game, 'Want to Play'); setRe
+         +freshKey((k) => k + 1) }}                                      
+      48 +      />                                                       
+      49 +      <GameLog refreshKey={refreshKey} />                      
+      50      </div>
+      51    )
+      52  }
+
+⏺ To test: search for a game and click "Add to Log". The game should appear
+  immediately in the list below with its cover, name, release year, and — Want 
+  to Play. Logging the same game again should not add a duplicate.
+
+❯ Let's now properly implement step 4. Focus only on this step. Do not          
+implement anything from future steps yet.                                       
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ The status picker needs to live per-row, so SearchResults needs its own local
+  state. I'll use useState to track the selected status for each row
+  independently.
+
+⏺ Write(game-log/src/components/SearchResults.jsx)
+  ⎿  Added 25 lines, removed 8 lines
+       1 +import { useState } from 'react'                               
+       2 +                                                               
+       3 +const STATUSES = ['Want to Play', 'Playing', 'Played']         
+       4 +                                                               
+       5 +function GameResult({ game, onLog }) {                         
+       6 +  const [status, setStatus] = useState('Want to Play')         
+       7 +                                                               
+       8 +  return (                                                     
+       9 +    <li key={game.id}>                                         
+      10 +      {game.coverUrl && (                                      
+      11 +        <img src={game.coverUrl} alt={game.name} width={64} /> 
+      12 +      )}                                                       
+      13 +      <span>{game.name}</span>                                 
+      14 +      {game.releaseYear && <span> ({game.releaseYear})</span>} 
+      15 +      <select value={status} onChange={(e) => setStatus(e.targe
+         +t.value)}>                                                     
+      16 +        {STATUSES.map((s) => (                                 
+      17 +          <option key={s} value={s}>{s}</option>               
+      18 +        ))}                                                    
+      19 +      </select>                                                
+      20 +      <button onClick={() => onLog(game, status)}>Add to Log</b
+         +utton>                                                         
+      21 +    </li>                                                      
+      22 +  )                                                            
+      23 +}                                                              
+      24 +                                                               
+      25  function SearchResults({ results = [], onLog }) {
+      26    return (
+      27      <ul>
+      28        {results.map((game) => (
+       5 -        <li key={game.id}>                                     
+       6 -          {game.coverUrl && (                                  
+       7 -            <img src={game.coverUrl} alt={game.name} width={64}
+         - />                                                            
+       8 -          )}                                                   
+       9 -          <span>{game.name}</span>                             
+      10 -          {game.releaseYear && <span> ({game.releaseYear})</spa
+         -n>}                                                            
+      11 -          <button onClick={() => onLog(game)}>Add to Log</butto
+         -n>                                                             
+      12 -        </li>                                                  
+      29 +        <GameResult key={game.id} game={game} onLog={onLog} /> 
+      30        ))}
+      31      </ul>
+      32    )
+
+⏺ Now update App.jsx to pass the status through to addGame:
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Update(game-log/src/App.jsx)
+  ⎿  Added 1 line, removed 1 line
+      44        {error && <p>{error}</p>}
+      45        <SearchResults
+      46          results={results}
+      47 -        onLog={(game) => { addGame(game, 'Want to Play'); setRe
+         -freshKey((k) => k + 1) }}                                      
+      47 +        onLog={(game, status) => { addGame(game, status); setRe
+         +freshKey((k) => k + 1) }}                                      
+      48        />
+      49        <GameLog refreshKey={refreshKey} />
+      50      </div>
+
+⏺ To test: search for three games, set each to a different status in the
+  dropdown, then click "Add to Log" on each. All three should appear in the log
+  below with their correct statuses.
+
+❯ Let's now properly implement step 5. Focus only on this step. Do not          
+implement anything from future steps yet.                                       
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ GameLog can own its own state mutations directly — no need to involve App for
+  remove/update. I'll manage the list internally and drop the refreshKey
+  dependency for those actions.
+
+⏺ Write(game-log/src/components/GameLog.jsx)
+  ⎿  Added 22 lines, removed 2 lines
+      1  import { useState, useEffect } from 'react'
+      2 -import { getGames } from '@/lib/gameLogService'                 
+      2 +import { getGames, updateStatus, removeGame } from '@/lib/gameLo
+        +gService'                                                       
+      3  
+      4 +const STATUSES = ['Want to Play', 'Playing', 'Played']          
+      5 +                                                                
+      6  function GameLog({ refreshKey }) {
+      7    const [games, setGames] = useState([])
+      8  
+     ...
+      10      setGames(getGames())
+      11    }, [refreshKey])
+      12  
+      13 +  function handleStatusChange(id, status) {                    
+      14 +    updateStatus(id, status)                                   
+      15 +    setGames((prev) => prev.map((g) => g.id === id ? { ...g, st
+         +atus } : g))                                                   
+      16 +  }                                                            
+      17 +                                                               
+      18 +  function handleRemove(id) {                                  
+      19 +    removeGame(id)                                             
+      20 +    setGames((prev) => prev.filter((g) => g.id !== id))        
+      21 +  }                                                            
+      22 +                                                               
+      23    if (games.length === 0) return <p>No games logged yet.</p>
+      24  
+      25    return (
+     ...
+      31            )}
+      32            <span>{game.name}</span>
+      33            {game.releaseYear && <span> ({game.releaseYear})</spa
+          n>}
+      22 -          <span> — {game.status}</span>                        
+      34 +          <select                                              
+      35 +            value={game.status}                                
+      36 +            onChange={(e) => handleStatusChange(game.id, e.targ
+         +et.value)}                                                     
+      37 +          >                                                    
+      38 +            {STATUSES.map((s) => (                             
+      39 +              <option key={s} value={s}>{s}</option>           
+      40 +            ))}                                                
+      41 +          </select>                                            
+      42 +          <button onClick={() => handleRemove(game.id)}>Remove<
+         +/button>                                                       
+      43          </li>
+      44        ))}
+      45      </ul>
+
+⏺ To test:
+  1. Status change — change the dropdown on a logged game; the select should
+  stay at the new value and localStorage should reflect it
+  (JSON.parse(localStorage.getItem('logged_games')))
+  2. Remove — click "Remove" on a game; it should disappear from the list
+  immediately and be gone from localStorage
+
+❯ The notes outlined below come from a separate review of the current code. Go  
+through each of them, evaluate their accuracy/authenticity, and apply proper    
+fixes if deemed necessary.                                                      
+                                                                                
+Bugs / Break Risks                                                              
+                                                                                
+High: getGames() can crash render if storage contains invalid JSON, because     
+JSON.parse(...) is unguarded in gameLogService.js:17-19.                        
+High: all storage writes are unguarded (setItem in add/update/remove), so       
+quota/security errors can throw and break user actions in                       
+gameLogService.js:43-44, gameLogService.js:66-67, gameLogService.js:81-82.      
+Medium: UI assumes persistence succeeded; GameLog updates local state even if   
+service returns failure (null/false), causing potential UI-storage mismatch in  
+GameLog.jsx:13-21.                                                              
+Medium: add flow ignores result/errors from addGame; refreshKey increments      
+regardless, so failures/duplicates are silent in App.jsx:45-46.                 
+Edge Cases                                                                      
+                                                                                
+No runtime validation for status/id; bad external data can be persisted and     
+shown (service trusts inputs) in gameLogService.js:27-41 and                    
+gameLogService.js:53-63.                                                        
+                                                                                
+No cross-tab sync (storage event not handled), so open tabs can show stale logs 
+ until refresh in GameLog.jsx:9-11.                                             
+                                                                                
+Small cleanup: redundant key on <li> inside GameResult (actual list key is      
+already on GameResult in parent) in SearchResults.jsx:9 and                     
+SearchResults.jsx:26-27.                                                        
+
+⏺ Let me read the current state of all affected files before evaluating.
+
+  Read 4 files (ctrl+o to expand)
+
+⏺ Here's my evaluation of each note:
+
+  - High (JSON.parse crash) — Valid. JSON.parse on corrupted storage will throw
+  and crash the render.
+  - High (unguarded setItem) — Valid. QuotaExceededError / SecurityError are
+  real throws.
+  - Medium (UI-storage mismatch) — Valid. GameLog updates state unconditionally
+  regardless of whether the service call threw.
+  - Medium (addGame result ignored) — Valid. refreshKey increments even on
+  storage failure.
+  - No status validation — Partially valid. Status values always come from our
+  own dropdowns, so the UI path is safe. But invalid data in existing
+  localStorage could be persisted further. Worth a cheap guard.
+  - No cross-tab sync — Valid observation but genuinely out of scope for MVP.
+  Skipping.
+  - Redundant key on <li> — Valid. key inside a component's own render is a
+  no-op; React only reads it from the parent's map.
+
+  Applying all fixes except cross-tab sync:
+
+⏺ Write(game-log/src/lib/gameLogService.js)
+  ⎿  Added 29 lines, removed 4 lines
+      1  const STORAGE_KEY = 'logged_games'
+      2  
+      3 +const VALID_STATUSES = new Set(['Played', 'Playing', 'Want to Pl
+        +ay'])                                                           
+      4 +                                                                
+      5  /**
+      6   * @typedef {'Played' | 'Playing' | 'Want to Play'} GameStatus
+      7   */
+     ...
+      19   * @returns {LoggedGame[]}
+      20   */
+      21  export function getGames() {
+      20 -  return JSON.parse(localStorage.getItem(STORAGE_KEY)) ?? []   
+      22 +  try {                                                        
+      23 +    return JSON.parse(localStorage.getItem(STORAGE_KEY)) ?? [] 
+      24 +  } catch {                                                    
+      25 +    return []                                                  
+      26 +  }                                                            
+      27  }
+      28  
+      29  /**
+     ...
+      33   * @returns {LoggedGame} The newly added entry.
+      34   */
+      35  export function addGame(game, status) {
+      36 +  if (!VALID_STATUSES.has(status)) throw new Error(`Invalid sta
+         +tus: ${status}`)                                               
+      37 +                                                               
+      38    const games = getGames()
+      39  
+      40    const existing = games.find((g) => g.id === game.id)
+     ...
+      49      addedAt: new Date().toISOString(),
+      50    }
+      51  
+      44 -  localStorage.setItem(STORAGE_KEY, JSON.stringify([...games, e
+         -ntry]))                                                        
+      52 +  try {                                                        
+      53 +    localStorage.setItem(STORAGE_KEY, JSON.stringify([...games,
+         + entry]))                                                      
+      54 +  } catch (err) {                                              
+      55 +    throw new Error(`Failed to save game: ${err.message}`)     
+      56 +  }                                                            
+      57 +                                                               
+      58    return entry
+      59  }
+      60  
+     ...
+      65   * @returns {LoggedGame|null} The updated entry, or null if not
+           found.
+      66   */
+      67  export function updateStatus(id, status) {
+      68 +  if (!VALID_STATUSES.has(status)) throw new Error(`Invalid sta
+         +tus: ${status}`)                                               
+      69 +                                                               
+      70    const games = getGames()
+      71    let updated = null
+      72  
+     ...
+      78  
+      79    if (!updated) return null
+      80  
+      66 -  localStorage.setItem(STORAGE_KEY, JSON.stringify(next))      
+      81 +  try {                                                        
+      82 +    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))    
+      83 +  } catch (err) {                                              
+      84 +    throw new Error(`Failed to update status: ${err.message}`) 
+      85 +  }                                                            
+      86 +                                                               
+      87    return updated
+      88  }
+      89  
+     ...
+       98  
+       99    if (next.length === games.length) return false
+      100  
+       81 -  localStorage.setItem(STORAGE_KEY, JSON.stringify(next))     
+      101 +  try {                                                       
+      102 +    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))   
+      103 +  } catch (err) {                                             
+      104 +    throw new Error(`Failed to remove game: ${err.message}`)  
+      105 +  }                                                           
+      106 +                                                              
+      107    return true
+      108  }
+
+⏺ Now fix GameLog.jsx — only update state if the service call succeeds:
+
+⏺ Update(game-log/src/components/GameLog.jsx)
+  ⎿  Added 12 lines, removed 4 lines
+      11    }, [refreshKey])
+      12  
+      13    function handleStatusChange(id, status) {
+      14 -    updateStatus(id, status)                                   
+      15 -    setGames((prev) => prev.map((g) => g.id === id ? { ...g, st
+         -atus } : g))                                                   
+      14 +    try {                                                      
+      15 +      updateStatus(id, status)                                 
+      16 +      setGames((prev) => prev.map((g) => g.id === id ? { ...g, 
+         +status } : g))                                                 
+      17 +    } catch (err) {                                            
+      18 +      console.error(err)                                       
+      19 +    }                                                          
+      20    }
+      21  
+      22    function handleRemove(id) {
+      19 -    removeGame(id)                                             
+      20 -    setGames((prev) => prev.filter((g) => g.id !== id))        
+      23 +    try {                                                      
+      24 +      removeGame(id)                                           
+      25 +      setGames((prev) => prev.filter((g) => g.id !== id))      
+      26 +    } catch (err) {                                            
+      27 +      console.error(err)                                       
+      28 +    }                                                          
+      29    }
+      30  
+      31    if (games.length === 0) return <p>No games logged yet.</p>
+
+⏺ Now fix App.jsx — only increment refreshKey if addGame succeeds:
+
+⏺ Update(game-log/src/App.jsx)
+  ⎿  Added 8 lines, removed 1 line
+      44        {error && <p>{error}</p>}
+      45        <SearchResults
+      46          results={results}
+      47 -        onLog={(game, status) => { addGame(game, status); setRe
+         -freshKey((k) => k + 1) }}                                      
+      47 +        onLog={(game, status) => {                             
+      48 +          try {                                                
+      49 +            addGame(game, status)                              
+      50 +            setRefreshKey((k) => k + 1)                        
+      51 +          } catch (err) {                                      
+      52 +            console.error(err)                                 
+      53 +          }                                                    
+      54 +        }}                                                     
+      55        />
+      56        <GameLog refreshKey={refreshKey} />
+      57      </div>
+
+⏺ Finally, remove the redundant key from <li> inside GameResult:
+
+⏺ Update(game-log/src/components/SearchResults.jsx)
+  ⎿  Added 1 line, removed 1 line
+       6    const [status, setStatus] = useState('Want to Play')
+       7  
+       8    return (
+       9 -    <li key={game.id}>                                         
+       9 +    <li>                                                       
+      10        {game.coverUrl && (
+      11          <img src={game.coverUrl} alt={game.name} width={64} />
+      12        )}
+
+⏺ Summary of what was applied and why each was accepted or skipped:
+
+  ┌────────────────────┬─────────┬──────────────────────────────────────────┐
+  │        Note        │ Applied │                  Reason                  │
+  ├────────────────────┼─────────┼──────────────────────────────────────────┤
+  │ JSON.parse crash   │ Yes     │ Real crash path; silent [] fallback is   │
+  │ in getGames        │         │ the right recovery                       │
+  ├────────────────────┼─────────┼──────────────────────────────────────────┤
+  │ Unguarded setItem  │ Yes     │ QuotaExceededError is a real browser     │
+  │ calls              │         │ throw; callers now get a proper error    │
+  ├────────────────────┼─────────┼──────────────────────────────────────────┤
+  │ UI-storage         │         │ State now only updates if the service    │
+  │ mismatch in        │ Yes     │ call doesn't throw                       │
+  │ GameLog            │         │                                          │
+  ├────────────────────┼─────────┼──────────────────────────────────────────┤
+  │ addGame result     │ Yes     │ refreshKey no longer increments on       │
+  │ ignored in App     │         │ failure                                  │
+  ├────────────────────┼─────────┼──────────────────────────────────────────┤
+  │ No status          │ Yes     │ Cheap guard; protects against corrupted  │
+  │ validation         │         │ localStorage being re-persisted          │
+  ├────────────────────┼─────────┼──────────────────────────────────────────┤
+  │ No cross-tab sync  │ Skipped │ Valid but out of scope for MVP; adds     │
+  │                    │         │ non-trivial complexity                   │
+  ├────────────────────┼─────────┼──────────────────────────────────────────┤
+  │ Redundant key on   │ Yes     │ No-op prop removed; React ignores key    │
+  │ <li>               │         │ outside of a parent's render             │
+  └────────────────────┴─────────┴──────────────────────────────────────────┘
+
+✻ Cogitated for 1m 23s
+
+❯ Are there any other potential issues, edge cases, or bugs that the external   
+code review missed? Were any bugs, issues, or errors introduced with the newly  
+added fixes?                                                                    
+  Read 5 files (ctrl+o to expand)
+
+⏺ After carefully reviewing all files, here's what I found:
+
+  No new bugs were introduced by the fixes. The try/catch additions are correct,
+   status validation strings match what the dropdowns use, and the getGames()
+  fallback handles all error paths correctly.
+
+  One real bug was missed by the external review:
+
+  getGames() now safely catches invalid JSON, but it doesn't validate that the
+  parsed result is actually an array. If localStorage contains valid JSON that
+  isn't an array (e.g., null, {}, 42) — which could happen from a browser
+  extension, manual DevTools edit, or a future storage key collision —
+  JSON.parse succeeds, ?? [] doesn't fire (since the result isn't
+  null/undefined), and the returned value gets passed to .find(), .map(),
+  .filter() in the service functions, crashing with TypeError: games.map is not 
+  a function.
+
+  Fix is one line in getGames():
+
+⏺ Update(game-log/src/lib/gameLogService.js)
+  ⎿  Added 2 lines, removed 1 line
+      20   */
+      21  export function getGames() {
+      22    try {
+      23 -    return JSON.parse(localStorage.getItem(STORAGE_KEY)) ?? [] 
+      23 +    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY)
+         +)                                                              
+      24 +    return Array.isArray(parsed) ? parsed : []                 
+      25    } catch {
+      26      return []
+      27    }
+
+⏺ One minor pre-existing inefficiency (not worth fixing now): when "Add to Log"
+  is clicked on an already-logged game, addGame returns the existing entry
+  without writing, but setRefreshKey still increments, causing GameLog to do a
+  needless re-read of localStorage. The UI is correct — no duplicate appears —
+  it's just a wasted read. This becomes relevant to fix only if there's a
+  loading state added to the log in a future step.
+
+  Everything else looks clean. The SearchBar's onSearch fires once on mount with
+   an empty string, but handleSearch guards against it immediately. The
+  GameResult status state persisting across same-key re-renders is actually
+  correct behavior. No issues with the refreshKey + useEffect sync pattern.
+
+✻ Sautéed for 1m 10s

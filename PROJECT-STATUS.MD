@@ -10,9 +10,10 @@
 
 ## Currently Implemented Features
 - **Game Search & Database Integration** — Connect to IGDB or RAWG API for game data
+- **Game Logging** — Add games with status: Played / Playing / Want to Play
 
 ## Next Feature to be Implemented
-- **Game Logging** — Add games with status: Played / Playing / Want to Play
+- **Ratings & Reviews** — Rate games (1–10 or star system) with optional text review
 
 ## Current Bugs
 - None yet.

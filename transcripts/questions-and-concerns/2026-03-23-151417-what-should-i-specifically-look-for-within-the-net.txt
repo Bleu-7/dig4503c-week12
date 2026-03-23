@@ -1,0 +1,145 @@
+╭─── Claude Code v2.1.81 ──────────────────────────────────────────────────────╮
+│                                                    │ Tips for getting        │
+│                  Welcome back J.!                  │ started                 │
+│                                                    │ Run /init to create a … │
+│                       ▐▛███▜▌                      │ ─────────────────────── │
+│                      ▝▜█████▛▘                     │ Recent activity         │
+│                        ▘▘ ▝▝                       │ No recent activity      │
+│    Sonnet 4.6 · Claude Pro · jo591696@ucf.edu's    │                         │
+│    Organization                                    │                         │
+│        ~/claude-projects/week8/midterm-setup       │                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+❯ What should I specifically look for within the Network tab to verify that     
+only one API request is fired when typing a search result? How can I know that  
+true debouncing is correctly working after finishing a typing a search query?   
+  ⎿  User rejected Claude's plan:
+     ╭──────────────────────────╮
+     │ No plan found            │
+     ╰──────────────────────────╯
+
+❯ What should I specifically look for within the Network tab to verify that     
+only one API request is fired when typing a search result? How can I know that  
+true debouncing is correctly working after finishing a typing a search query?   
+
+⏺ Verifying Debouncing in the Network Tab
+
+  What to look for
+
+  1. Request timing vs. keystroke timing
+
+  Type a multi-word query rapidly (e.g., "the last of us") — you should see zero
+   requests fire while you're actively typing. Only one request should appear
+  after you stop typing and the debounce delay elapses (typically 300–500ms).
+
+  2. The timestamp column
+
+  Enable the "Time" column. All requests should cluster at a single timestamp —
+  the moment the debounce timer fired — not spread across multiple timestamps
+  matching each keystroke.
+
+  3. Request count
+
+  Filter by Fetch/XHR. For a 10-character query typed quickly, you should see 1 
+  request, not 10.
+
+  ---
+  How to test it definitively
+
+  1. Open DevTools → Network tab
+  2. Filter by Fetch/XHR
+  3. Click the clear button (🚫) to wipe existing requests
+  4. Type your full query as fast as possible
+  5. Stop typing and wait
+
+  Pass: One request appears after your pause. The URL contains your complete
+  query string.
+
+  Fail: Multiple requests appear, each with progressively longer query strings
+  (t, th, the, the , etc.)
+
+  ---
+  The "hold a key" trick
+
+  Type a character and hold it down (auto-repeat). You'll get dozens of
+  keystrokes rapidly. If debouncing is working, you still get zero requests
+  during the hold and one request after you release and the timer fires.
+
+  ---
+  Bonus: check the request URL itself
+
+  Click the single request and look at the Headers tab → Request URL. The q= (or
+   equivalent) param should contain your full final query, not a partial one. If
+   you see a partial query, the debounce delay may be too short or not
+  implemented correctly.
+
+❯ What should I specifically look for within Firefox's Network tab to verify    
+that only one API request is fired when typing a search result? How can I know  
+that true debouncing is correctly working after finishing a typing a search     
+query?                                                                          
+
+⏺ Same principles apply in Firefox — here's what's Firefox-specific:
+
+  ---
+  Firefox Network Tab: Verifying Debounce
+
+  Setup
+
+  1. Open DevTools (F12 or Cmd+Option+I)
+  2. Go to the Network tab
+  3. Filter by XHR (the filter bar at the top — click "XHR" to isolate fetch/XHR
+   requests)
+  4. Click the trash can icon to clear existing requests
+
+  ---
+  What to watch for while typing
+
+  Type a full query rapidly (e.g., "breath of the wild"). While your fingers are
+   moving:
+
+  - The request list should stay empty. No rows should appear.
+  - If rows appear per keystroke, debounce is broken.
+
+  After you stop typing and the debounce delay passes (~300–500ms):
+
+  - Exactly one row appears.
+  - Click it and check the Headers panel → the URL's query param should contain
+  your complete final query, not a partial one.
+
+  ---
+  Firefox-specific columns to check
+
+  In the Network table, right-click the column headers and enable:
+
+  ┌───────────┬──────────────────────────────────────────────────────────────┐
+  │  Column   │                        What to check                         │
+  ├───────────┼──────────────────────────────────────────────────────────────┤
+  │ Waterfall │ All requests should appear at the same horizontal position   │
+  │           │ (same moment in time), not staggered                         │
+  ├───────────┼──────────────────────────────────────────────────────────────┤
+  │ Started   │ Should show a single timestamp matching when you stopped     │
+  │           │ typing                                                       │
+  ├───────────┼──────────────────────────────────────────────────────────────┤
+  │ File      │ Should show only one API request entry, not one per          │
+  │           │ character                                                    │
+  └───────────┴──────────────────────────────────────────────────────────────┘
+
+  ---
+  The definitive test
+
+  1. Clear the network log
+  2. Type your query as fast as you can
+  3. Stop — count the rows under the XHR filter
+
+  - 1 row = debounce working
+  - N rows (one per character) = debounce broken or missing
+
+  Hold-key stress test
+
+  Hold down any letter key for 2–3 seconds (triggers rapid auto-repeat
+  keystrokes). Release it. You should see zero requests during the hold and one 
+  request fire after release. This is the fastest way to confirm debounce is
+  real and not just fast.
+
+❯ /usage                                                                        
+  ⎿  Status dialog dismissed

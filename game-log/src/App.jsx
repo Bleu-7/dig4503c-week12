@@ -1,14 +1,45 @@
-import './App.css'
+import { useState, useCallback, useRef } from 'react'
+import { searchGames } from '@/lib/gameSearchService'
+import SearchBar from '@/components/SearchBar'
+import SearchResults from '@/components/SearchResults'
 
 function App() {
+  const [results, setResults] = useState([])
+  const [error, setError] = useState(null)
+  const latestQueryRef = useRef('')
+  const lastSearchedRef = useRef('')
+
+  const handleSearch = useCallback(async (query) => {
+    const trimmed = query.trim()
+    if (!trimmed) {
+      setResults([])
+      setError(null)
+      lastSearchedRef.current = ''
+      return
+    }
+    if (trimmed === lastSearchedRef.current) return
+    lastSearchedRef.current = trimmed
+    latestQueryRef.current = trimmed
+    setError(null)
+    try {
+      const games = await searchGames(trimmed)
+      if (trimmed === latestQueryRef.current) {
+        console.log('Search results:', games)
+        setResults(games)
+      }
+    } catch (err) {
+      if (trimmed === latestQueryRef.current) {
+        setError(err.message)
+      }
+    }
+  }, [])
+
   return (
-    <div className="landing">
-      <h1 className="title">GameLog</h1>
-      <p className="description">
-        Track every game you've played, rate your favorites, and write reviews — all in one place.
-        GameLog is a personal gaming journal inspired by Letterboxd, built for players who care about
-        their backlog. Log your status, share your takes, and own your gaming history.
-      </p>
+    <div>
+      <h1>GameLog</h1>
+      <SearchBar onSearch={handleSearch} />
+      {error && <p>{error}</p>}
+      <SearchResults results={results} />
     </div>
   )
 }

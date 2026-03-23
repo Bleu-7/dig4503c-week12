@@ -1,29 +1,6 @@
-# Video Game Tracker — Implementation Plan
+# Game Log - Implementation Plan
 
 A Letterboxd-style video game tracking website.
-
----
-
-## Core MVP Features
-
-1. **User Accounts & Authentication** — Sign up, log in, user profiles
-2. **Game Search & Database Integration** — Connect to IGDB or RAWG API for game data
-3. **Game Logging** — Add games with status: Played / Playing / Want to Play
-4. **Ratings & Reviews** — Rate games (1–10 or star system) with optional text review
-5. **User Profile Page** — Public-facing page showing a user's logged games, ratings, and reviews
-
-## Bonus / Nice-to-Have Features (Post-MVP)
-
-- Activity feed (recent logs/reviews from followed users)
-- Following / social graph
-- Trending / popular games this week
-- Custom lists (e.g. "Top 10 RPGs")
-- Completion tracking (hours played, platform, completion %)
-- Backlog management and prioritization
-- Game recommendations based on ratings
-- Achievement/badge system
-- Game diary (log replays with dates)
-- Stats dashboard (games per genre, avg rating, most active month)
 
 ---
 
@@ -35,7 +12,7 @@ A Letterboxd-style video game tracking website.
 | Styling | Tailwind CSS + shadcn/ui |
 | Data (MVP) | localStorage (abstracted behind a service layer) |
 | Data (Post-MVP) | Supabase (migration-ready by design) |
-| Game Data API | IGDB (preferred) or RAWG |
+| Game Data API | RAWG |
 
 ---
 
@@ -123,11 +100,3 @@ SQL handles relational queries naturally (e.g. "all reviews for a game sorted by
 5. Handle async/await — the main adjustment (localStorage is sync, Supabase is async)
 
 Using React Query or standard `useEffect` patterns from the start minimizes this friction.
-
----
-
-## Game Data API
-
-**IGDB** (preferred) — extensive coverage, metadata, cover art, genre tags. Requires free Twitch/IGDB credentials for OAuth.
-
-**RAWG** — simpler REST API, no OAuth overhead. Good fallback if IGDB setup feels heavy early on.

@@ -1,6 +1,6 @@
 # GameLog - A Video Game Tracker Website
 
-A Letterboxd-style web application for discovering, logging, and reviewing video games. Designed with a clean, dark-first aesthetic and a scalable architecture, this project aims to give players a personal, social space to track their gaming history and share their takes with others.
+A Letterboxd-style web application for discovering, logging, and reviewing video games. Designed with a clean, dark-first aesthetic and a scalable architecture, this project aims to give players a personal, private space to track their gaming history and collect their feelings about it.
 
 
 ## Feature List
@@ -16,6 +16,5 @@ A Letterboxd-style web application for discovering, logging, and reviewing video
 
 - Front-End: **React + Vite**
 - Styling: **Tailwind CSS + shadcn/ui**
-- Data (MVP): **localStorage (abstracted behind a service layer)**
-- Back-End Data (Post-MVP): **Supabase (migration-ready by design)**
-- Game Data API: **IGDB (preferred) or RAWG**
+- Front-End Data (MVP): **localStorage (abstracted behind a service layer)**
+- Game Data API: **RAWG**

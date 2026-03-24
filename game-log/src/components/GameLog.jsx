@@ -58,35 +58,8 @@ function GameLog({ refreshKey, onRemove }) {
                 <div className="h-16 w-12 shrink-0 rounded bg-zinc-800" />
               )}
               <div className="min-w-0 flex-1">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-medium text-zinc-100">{game.name}</p>
-                    {game.releaseYear && <p className="text-xs text-zinc-500">{game.releaseYear}</p>}
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    <select
-                      value={game.status}
-                      onChange={(e) => handleStatusChange(game.id, e.target.value)}
-                      className="rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-xs text-zinc-300 focus:border-violet-500 focus:outline-none"
-                    >
-                      {STATUSES.map((s) => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={() => setOpenReviewId(openReviewId === game.id ? null : game.id)}
-                      className="rounded px-2 py-1 text-xs text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-violet-400"
-                    >
-                      {game.rating || game.review ? 'Edit Review' : 'Review'}
-                    </button>
-                    <button
-                      onClick={() => handleRemove(game.id)}
-                      className="rounded px-2 py-1 text-xs text-zinc-600 transition-colors hover:bg-zinc-800 hover:text-red-400"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </div>
+                <p className="text-sm font-medium text-zinc-100">{game.name}</p>
+                {game.releaseYear && <p className="text-xs text-zinc-500">{game.releaseYear}</p>}
                 {(game.rating || game.review) && (
                   <div className="mt-1.5 flex items-start gap-2">
                     {game.rating && (
@@ -97,6 +70,29 @@ function GameLog({ refreshKey, onRemove }) {
                     )}
                   </div>
                 )}
+                <div className="mt-2 flex items-center gap-1.5">
+                  <select
+                    value={game.status}
+                    onChange={(e) => handleStatusChange(game.id, e.target.value)}
+                    className="rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-xs text-zinc-300 focus:border-violet-500 focus:outline-none"
+                  >
+                    {STATUSES.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => setOpenReviewId(openReviewId === game.id ? null : game.id)}
+                    className="rounded px-2 py-1 text-xs text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-violet-400"
+                  >
+                    {game.rating || game.review ? 'Edit Review' : 'Review'}
+                  </button>
+                  <button
+                    onClick={() => handleRemove(game.id)}
+                    className="rounded px-2 py-1 text-xs text-zinc-600 transition-colors hover:bg-zinc-800 hover:text-red-400"
+                  >
+                    Remove
+                  </button>
+                </div>
               </div>
             </div>
             {openReviewId === game.id && (

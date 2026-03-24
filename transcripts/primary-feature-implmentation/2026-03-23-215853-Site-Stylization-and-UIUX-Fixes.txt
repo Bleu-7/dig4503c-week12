@@ -12,7 +12,6 @@
 
 ❯ Begin visually stylizing all the site's pages based off what is outlined for  
 CSS Styling in @"Implementation Plan.md"                                        
-  ⎿  Read Implementation Plan.md (102 lines)
 
 ⏺ Explore(Explore project structure and styling)
   ⎿  Done (22 tool uses · 35.4k tokens · 39s)
@@ -739,7 +738,7 @@ CSS Styling in @"Implementation Plan.md"
   - Profile — stat grid (2-col mobile, 4-col desktop), recent reviews list with
   rating badges
 
-✻ Worked for 3m 34s
+✻ Crunched for 3m 34s
 
 ❯ When testing the site, I found a potential UI/UX issue that users might find  
 annoying. After using the search bar to find a game title and clicking that     
@@ -751,7 +750,8 @@ reflect the fact that that specific game has been added to the user's log.
 
   Read 1 file (ctrl+o to expand)
 
-⏺ Update(game-log/src/components/SearchResults.jsx)  ⎿  Added 12 lines, removed 4 lines
+⏺ Update(game-log/src/components/SearchResults.jsx)
+  ⎿  Added 12 lines, removed 4 lines
        4  
        5  function GameResult({ game, onLog }) {
        6    const [status, setStatus] = useState('Want to Play')
@@ -805,8 +805,7 @@ reflect the fact that that specific game has been added to the user's log.
   - Disables the button and changes its text to "Added"
   - Greys it out with zinc-700 background and zinc-500 text
   - Also disables the status dropdown so the whole row looks inert
-
-✻ Baked for 47s
+✻ Worked for 47s
 
 ❯ I found another issue relating to this. Games that have been added to the     
 user's log still show up in search results with the ability to have their "Add" 
@@ -987,7 +986,7 @@ normally in search results.
   the log, refreshKey ticks up, loggedIds recomputes without that ID, and the
   result becomes interactive again
 
-✻ Churned for 1m 16s
+✻ Crunched for 1m 16s
 
 ❯ Review all the current code that has been generated in this chat window up    
 until now. Check for any bugs, edge cases, and anything else that could break   
@@ -1079,6 +1078,7 @@ or has broke.
       90          />
       91        </main>
       92      </div>
+
 ⏺ Here's what each key now does:
 
   - addKey — increments when a game is added or removed. Drives loggedIds
@@ -1105,8 +1105,7 @@ or has broke.
   │                  │ GameLog's useEffect         │ reload)                │
   └──────────────────┴─────────────────────────────┴────────────────────────┘
 
-✻ Cogitated for 1m 49s
-
+✻ Cooked for 1m 49s
 ❯ Are there any potential overflow concerns with the newly added addkey and     
 logkey?                                                                         
 
@@ -1123,3 +1122,275 @@ logkey?
 
   A boolean flip can never overflow. But for a game logging app, the integer
   counters are fine — this isn't worth changing.
+
+❯ /export                                                                       
+  ⎿  Conversation exported to: /Users/j.r./claude-projects/week8/midterm-setup/2
+     026-03-23-201045-Site-Stylization-and-UIUX-Fixes.txt
+
+❯ When testing the site's responsive design for mobile, I found a big issue     
+within the user's game log. When a logged game's text review gets long enough,  
+the remove button ends up going off-screen and becomes nearly impossible to     
+click/tap. Even when there is no text review present, the remove button ends up 
+ slightly offscreen anyways. What are some ways you recommend fixing this?      
+Provide detailled explanations for any all fixes.                               
+
+⏺ Let me look at the current GameLog layout before making recommendations.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ The root cause is clear. The inner flex justify-between row on line 61 tries
+  to fit the game name on the left and the full controls cluster (select + 2
+  buttons) on the right, all as shrink-0. The overflow-hidden on the <li> then
+  clips whatever doesn't fit, making Remove invisible. Here are the realistic
+  options:
+
+  ---
+  Option 1: Two-row layout (recommended)
+
+  Move the controls out of the justify-between row and into their own row below
+  the title. The name gets the full width of the card, and the controls sit
+  beneath it.
+
+  [Cover] | The Legend of Zelda: Tears of the Kingdom
+          | 2023
+          | [Want to Play ▾]  [Review]  [Remove]
+
+  This is the standard mobile card pattern. Controls always have room because
+  they're no longer competing with the title for horizontal space. On any screen
+   width, the name wraps naturally and the controls row is always fully visible.
+   Implementation is straightforward — just restructure the JSX into stacked
+  <div>s instead of one flex justify-between.
+
+  The one tradeoff: cards get slightly taller. For a game log this is a
+  non-issue.
+
+  ---
+  Option 2: flex-wrap on the controls row
+
+  Add flex-wrap to the existing shrink-0 controls container so the controls wrap
+   to a second line when they don't fit. Requires no structural change.
+
+  The downside is unpredictability — on in-between screen sizes (e.g.
+  380–420px), only the Remove button might wrap, creating an awkward half-row.
+  You'd also lose the shrink-0 guarantee, meaning the layout shifts differently
+  per screen width. Harder to reason about visually.
+
+  ---
+  Option 3: Icon-only buttons
+
+  Replace the text buttons with symbols — e.g. ✕ for Remove, ✎ for Review/Edit
+  Review. This shrinks the controls cluster dramatically, likely fixing the
+  overflow without any layout change.
+
+  The tradeoff is discoverability: icon-only buttons require users to already
+  know what they do. For a first-time user, a plain ✕ next to a game is not
+  obviously "remove from log." This is mitigable with title attributes (tooltip
+  on hover) but that doesn't help on touchscreens. Best used in combination with
+   Option 1, not as a standalone fix.
+
+  ---
+  Option 4: Overflow/kebab menu
+
+  Put Review and Remove inside a dropdown triggered by a ⋮ button. This is the
+  most native mobile pattern (used by nearly every mobile app for row actions)
+  and keeps cards compact.
+
+  The tradeoff is implementation complexity — you'd need per-row open/close
+  state, click-outside-to-dismiss handling, and dropdown positioning logic. It
+  also adds an extra tap to reach every action, which is a UX regression on
+  desktop. Not worth it here given the simpler alternatives.
+
+  ---
+  Recommendation: Option 1. It's the most reliable fix, requires no new UX
+  patterns, keeps all labels visible, and handles long game titles cleanly at
+  every viewport width. Want me to implement it?
+
+✻ Churned for 53s
+
+❯ Implement Option 1.                                                           
+
+⏺ Update(game-log/src/components/GameLog.jsx)
+  ⎿  Added 25 lines, removed 29 lines
+      58                  <div className="h-16 w-12 shrink-0 rounded bg-z
+          inc-800" />
+      59                )}
+      60                <div className="min-w-0 flex-1">
+      61 -                <div className="flex items-start justify-betwee
+         -n gap-2">                                                      
+      62 -                  <div>                                        
+      63 -                    <p className="text-sm font-medium text-zinc
+         --100">{game.name}</p>                                          
+      64 -                    {game.releaseYear && <p className="text-xs 
+         -text-zinc-500">{game.releaseYear}</p>}                         
+      65 -                  </div>                                       
+      66 -                  <div className="flex shrink-0 items-center ga
+         -p-1.5">                                                        
+      67 -                    <select                                    
+      68 -                      value={game.status}                      
+      69 -                      onChange={(e) => handleStatusChange(game.
+         -id, e.target.value)}                                           
+      70 -                      className="rounded border border-zinc-700
+         - bg-zinc-800 px-2 py-1 text-xs text-zinc-300 focus:border-viole
+         -t-500 focus:outline-none"                                      
+      71 -                    >                                          
+      72 -                      {STATUSES.map((s) => (                   
+      73 -                        <option key={s} value={s}>{s}</option> 
+      74 -                      ))}                                      
+      75 -                    </select>                                  
+      76 -                    <button                                    
+      77 -                      onClick={() => setOpenReviewId(openReview
+         -Id === game.id ? null : game.id)}                              
+      78 -                      className="rounded px-2 py-1 text-xs text
+         --zinc-400 transition-colors hover:bg-zinc-800 hover:text-violet
+         --400"                                                          
+      79 -                    >                                          
+      80 -                      {game.rating || game.review ? 'Edit Revie
+         -w' : 'Review'}                                                 
+      81 -                    </button>                                  
+      82 -                    <button                                    
+      83 -                      onClick={() => handleRemove(game.id)}    
+      84 -                      className="rounded px-2 py-1 text-xs text
+         --zinc-600 transition-colors hover:bg-zinc-800 hover:text-red-40
+         -0"                                                             
+      85 -                    >                                          
+      86 -                      Remove                                   
+      87 -                    </button>                                  
+      88 -                  </div>                                       
+      89 -                </div>                                         
+      61 +                <p className="text-sm font-medium text-zinc-100
+         +">{game.name}</p>                                              
+      62 +                {game.releaseYear && <p className="text-xs text
+         +-zinc-500">{game.releaseYear}</p>}                             
+      63                  {(game.rating || game.review) && (
+      64                    <div className="mt-1.5 flex items-start gap-2
+          ">
+      65                      {game.rating && (
+     ...
+       70                      )}
+       71                    </div>
+       72                  )}
+       73 +                <div className="mt-2 flex items-center gap-1.5
+          +">                                                            
+       74 +                  <select                                     
+       75 +                    value={game.status}                       
+       76 +                    onChange={(e) => handleStatusChange(game.i
+          +d, e.target.value)}                                           
+       77 +                    className="rounded border border-zinc-700 
+          +bg-zinc-800 px-2 py-1 text-xs text-zinc-300 focus:border-viole
+          +t-500 focus:outline-none"                                     
+       78 +                  >                                           
+       79 +                    {STATUSES.map((s) => (                    
+       80 +                      <option key={s} value={s}>{s}</option>  
+       81 +                    ))}                                       
+       82 +                  </select>                                   
+       83 +                  <button                                     
+       84 +                    onClick={() => setOpenReviewId(openReviewI
+          +d === game.id ? null : game.id)}                              
+       85 +                    className="rounded px-2 py-1 text-xs text-
+          +zinc-400 transition-colors hover:bg-zinc-800 hover:text-violet
+          +-400"                                                         
+       86 +                  >                                           
+       87 +                    {game.rating || game.review ? 'Edit Review
+          +' : 'Review'}                                                 
+       88 +                  </button>                                   
+       89 +                  <button                                     
+       90 +                    onClick={() => handleRemove(game.id)}     
+       91 +                    className="rounded px-2 py-1 text-xs text-
+          +zinc-600 transition-colors hover:bg-zinc-800 hover:text-red-40
+          +0"                                                            
+       92 +                  >                                           
+       93 +                    Remove                                    
+       94 +                  </button>                                   
+       95 +                </div>                                        
+       96                </div>
+       97              </div>
+       98              {openReviewId === game.id && (
+
+⏺ The layout is now stacked vertically within the content area: name → year →
+  rating/review preview → controls row. The controls are no longer competing
+  with the title for horizontal space, so Remove is always fully reachable
+  regardless of screen width or review length.
+
+❯ Can you also implement something similar to this for the search results.      
+Right now, the biggest issue seems to be that while the controls are easily     
+interactable, the game titles themselves end up being shortened to such a       
+degree that it makes knowing which game the user is adding to their log a lot   
+more difficult.                                                                 
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Same fix — move the controls below the title, and drop truncate so the name
+  can wrap freely instead of being cut off.
+
+⏺ Update(game-log/src/components/SearchResults.jsx)
+  ⎿  Added 20 lines, removed 20 lines
+      15          </div>
+      16        )}
+      17        <div className="min-w-0 flex-1">
+      18 -        <p className="truncate text-sm font-medium text-zinc-10
+         -0">{game.name}</p>                                             
+      18 +        <p className="text-sm font-medium text-zinc-100">{game.
+         +name}</p>                                                      
+      19          {game.releaseYear && <p className="text-xs text-zinc-50
+          0">{game.releaseYear}</p>}
+      20 +        <div className="mt-2 flex items-center gap-2">         
+      21 +          <select                                              
+      22 +            value={status}                                     
+      23 +            onChange={(e) => setStatus(e.target.value)}        
+      24 +            disabled={isLogged}                                
+      25 +            className="rounded border border-zinc-700 bg-zinc-8
+         +00 px-2 py-1 text-xs text-zinc-300 focus:border-violet-500 focu
+         +s:outline-none disabled:opacity-40"                            
+      26 +          >                                                    
+      27 +            {STATUSES.map((s) => (                             
+      28 +              <option key={s} value={s}>{s}</option>           
+      29 +            ))}                                                
+      30 +          </select>                                            
+      31 +          <button                                              
+      32 +            onClick={() => onLog(game, status)}                
+      33 +            disabled={isLogged}                                
+      34 +            className="rounded px-3 py-1.5 text-xs font-medium 
+         +text-white transition-colors disabled:cursor-not-allowed disabl
+         +ed:bg-zinc-700 disabled:text-zinc-500 bg-violet-600 hover:bg-vi
+         +olet-500"                                                      
+      35 +          >                                                    
+      36 +            {isLogged ? 'Added' : 'Add'}                       
+      37 +          </button>                                            
+      38 +        </div>                                                 
+      39        </div>
+      21 -      <div className="flex shrink-0 items-center gap-2">       
+      22 -        <select                                                
+      23 -          value={status}                                       
+      24 -          onChange={(e) => setStatus(e.target.value)}          
+      25 -          disabled={isLogged}                                  
+      26 -          className="rounded border border-zinc-700 bg-zinc-800
+         - px-2 py-1 text-xs text-zinc-300 focus:border-violet-500 focus:
+         -outline-none disabled:opacity-40"                              
+      27 -        >                                                      
+      28 -          {STATUSES.map((s) => (                               
+      29 -            <option key={s} value={s}>{s}</option>             
+      30 -          ))}                                                  
+      31 -        </select>                                              
+      32 -        <button                                                
+      33 -          onClick={() => onLog(game, status)}                  
+      34 -          disabled={isLogged}                                  
+      35 -          className="rounded px-3 py-1.5 text-xs font-medium te
+         -xt-white transition-colors disabled:cursor-not-allowed disabled
+         -:bg-zinc-700 disabled:text-zinc-500 bg-violet-600 hover:bg-viol
+         -et-500"                                                        
+      36 -        >                                                      
+      37 -          {isLogged ? 'Added' : 'Add'}                         
+      38 -        </button>                                              
+      39 -      </div>                                                   
+      40      </li>
+      41    )
+      42  }
+
+⏺ Two changes made:
+
+  - Removed truncate from the title — it was the direct cause of the aggressive
+  shortening. The title now wraps to a second line if needed, keeping the full
+  name readable.
+  - Controls moved below the title/year into their own row, matching the GameLog
+   layout. The cover image stays fixed on the left while the name and controls
+  stack vertically beside it.

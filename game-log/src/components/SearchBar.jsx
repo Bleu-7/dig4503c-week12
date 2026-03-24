@@ -5,7 +5,6 @@ function SearchBar({ onSearch }) {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      console.log('Searching for:', query)
       onSearch(query)
     }, 300)
     return () => clearTimeout(timer)
@@ -17,6 +16,7 @@ function SearchBar({ onSearch }) {
       value={query}
       onChange={(e) => setQuery(e.target.value)}
       placeholder="Search for a game..."
+      className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-100 placeholder-zinc-500 transition-colors focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500/50"
     />
   )
 }

@@ -7,7 +7,7 @@ const RATINGS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
  */
 function StarRating({ value, onChange }) {
   return (
-    <span>
+    <div className="flex items-center gap-0.5">
       {RATINGS.map((n) => (
         <button
           key={n}
@@ -15,11 +15,19 @@ function StarRating({ value, onChange }) {
           onClick={() => onChange(value === n ? null : n)}
           aria-label={`Rate ${n} out of 10`}
           aria-pressed={value === n}
+          className={`text-lg transition-colors focus:outline-none ${
+            n <= (value ?? 0)
+              ? 'text-violet-400 hover:text-violet-300'
+              : 'text-zinc-700 hover:text-zinc-500'
+          }`}
         >
           {n <= (value ?? 0) ? '★' : '☆'}
         </button>
       ))}
-    </span>
+      {value && (
+        <span className="ml-2 text-xs text-zinc-500">{value}/10</span>
+      )}
+    </div>
   )
 }
 

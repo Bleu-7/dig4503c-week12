@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase'
 
 /**
  * Register a new user with email, password, and a display username.
- * The username is stored in user_metadata and is accessible via user.user_metadata.username.
+ * The username is stored in user_metadata and accessible via user.user_metadata.username.
  * @param {string} email
  * @param {string} password
  * @param {string} username
@@ -11,7 +11,7 @@ export async function register(email, password, username) {
   const { error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { username } },
+    options: { data: { username: username.trim() } },
   })
   if (error) throw new Error(error.message)
 }

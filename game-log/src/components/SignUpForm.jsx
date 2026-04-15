@@ -13,7 +13,7 @@ function SignUpForm() {
     setError(null)
     setLoading(true)
     try {
-      await register(email, password, username.trim())
+      await register(email, password, username)
       // onAuthStateChange in AuthContext picks up the new session automatically
     } catch (err) {
       setError(err.message)

@@ -81,7 +81,7 @@ function MainPage() {
               setAddKey((k) => k + 1)
               setLogKey((k) => k + 1)
             } catch (err) {
-              console.error(err)
+              setError(err.message)
             }
           }}
         />

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { getGames } from '@/lib/gameLogService'
@@ -6,7 +7,13 @@ const STATUSES = ['Played', 'Playing', 'Want to Play']
 
 function ProfilePage() {
   const { user } = useAuth()
-  const games = getGames()
+  const [games, setGames] = useState([])
+
+  useEffect(() => {
+    getGames().then(setGames).catch(console.error)
+  }, [])
+
+  const displayName = user.user_metadata?.username ?? user.email
 
   const countsByStatus = Object.fromEntries(
     STATUSES.map((s) => [s, games.filter((g) => g.status === s).length])
@@ -29,9 +36,9 @@ function ProfilePage() {
       </header>
       <main className="mx-auto max-w-4xl space-y-8 px-4 py-8">
         <div>
-          <h2 className="text-2xl font-bold text-zinc-100">{user.username}</h2>
+          <h2 className="text-2xl font-bold text-zinc-100">{displayName}</h2>
           <p className="mt-1 text-sm text-zinc-500">
-            Member since {new Date(user.createdAt).toLocaleDateString()}
+            Member since {new Date(user.created_at).toLocaleDateString()}
           </p>
         </div>
 

@@ -1,29 +1,32 @@
 import { useState, useEffect } from 'react'
 import { getGames, updateStatus, removeGame } from '@/lib/gameLogService'
 import ReviewForm from '@/components/ReviewForm'
+import TrailerModal from '@/components/TrailerModal'
+import { PlayCircle } from 'lucide-react'
 
 const STATUSES = ['Want to Play', 'Playing', 'Played']
 
 function GameLog({ refreshKey, onRemove }) {
   const [games, setGames] = useState([])
   const [openReviewId, setOpenReviewId] = useState(null)
+  const [trailerGame, setTrailerGame] = useState(null)
 
   useEffect(() => {
-    setGames(getGames())
+    getGames().then(setGames).catch(console.error)
   }, [refreshKey])
 
-  function handleStatusChange(id, status) {
+  async function handleStatusChange(id, status) {
     try {
-      updateStatus(id, status)
+      await updateStatus(id, status)
       setGames((prev) => prev.map((g) => g.id === id ? { ...g, status } : g))
     } catch (err) {
       console.error(err)
     }
   }
 
-  function handleRemove(id) {
+  async function handleRemove(id) {
     try {
-      removeGame(id)
+      await removeGame(id)
       setGames((prev) => prev.filter((g) => g.id !== id))
       if (openReviewId === id) setOpenReviewId(null)
       onRemove?.()
@@ -87,6 +90,13 @@ function GameLog({ refreshKey, onRemove }) {
                     {game.rating || game.review ? 'Edit Review' : 'Review'}
                   </button>
                   <button
+                    onClick={() => setTrailerGame(game)}
+                    className="flex items-center gap-1 rounded px-2 py-1 text-xs text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-violet-400"
+                  >
+                    <PlayCircle size={12} />
+                    Trailer
+                  </button>
+                  <button
                     onClick={() => handleRemove(game.id)}
                     className="rounded px-2 py-1 text-xs text-zinc-600 transition-colors hover:bg-zinc-800 hover:text-red-400"
                   >
@@ -103,6 +113,10 @@ function GameLog({ refreshKey, onRemove }) {
           </li>
         ))}
       </ul>
+
+      {trailerGame && (
+        <TrailerModal game={trailerGame} onClose={() => setTrailerGame(null)} />
+      )}
     </div>
   )
 }

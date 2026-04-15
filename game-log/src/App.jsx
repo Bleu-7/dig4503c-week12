@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useMemo } from 'react'
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import { Routes, Route, Navigate, Link } from 'react-router-dom'
 import { searchGames } from '@/lib/gameSearchService'
 import { addGame, getGames } from '@/lib/gameLogService'
@@ -20,10 +20,11 @@ function MainPage() {
   const latestQueryRef = useRef('')
   const lastSearchedRef = useRef('')
 
-  const loggedIds = useMemo(
-    () => new Set(getGames().map((g) => g.id)),
-    [addKey]
-  )
+  const [loggedIds, setLoggedIds] = useState(new Set())
+
+  useEffect(() => {
+    getGames().then((games) => setLoggedIds(new Set(games.map((g) => g.id)))).catch(console.error)
+  }, [addKey])
 
   const handleSearch = useCallback(async (query) => {
     const trimmed = query.trim()
@@ -56,7 +57,7 @@ function MainPage() {
           <h1 className="text-xl font-bold tracking-tight text-violet-400">GameLog</h1>
           <div className="flex items-center gap-3 text-sm">
             <Link to="/profile" className="text-zinc-400 transition-colors hover:text-zinc-100">
-              {user.username}
+              {user.user_metadata?.username ?? user.email}
             </Link>
             <button
               type="button"
@@ -74,9 +75,9 @@ function MainPage() {
         <SearchResults
           results={results}
           loggedIds={loggedIds}
-          onLog={(game, status) => {
+          onLog={async (game, status) => {
             try {
-              addGame(game, status)
+              await addGame(game, status)
               setAddKey((k) => k + 1)
               setLogKey((k) => k + 1)
             } catch (err) {

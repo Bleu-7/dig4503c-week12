@@ -1,16 +1,6 @@
-import { getCurrentUser } from '@/lib/authService'
+import { supabase } from '@/lib/supabase'
 
 const VALID_STATUSES = new Set(['Played', 'Playing', 'Want to Play'])
-
-/**
- * Returns the localStorage key scoped to the current user.
- * Throws if no user is logged in.
- */
-function getStorageKey() {
-  const user = getCurrentUser()
-  if (!user) throw new Error('Not logged in.')
-  return `logged_games_${user.id}`
-}
 
 /**
  * @typedef {'Played' | 'Playing' | 'Want to Play'} GameStatus
@@ -24,137 +14,108 @@ function getStorageKey() {
  * @typedef {{ id: number, name: string, coverUrl: string|null, releaseYear: string|null, status: GameStatus, addedAt: string, rating: number|null, review: string|null, reviewedAt: string|null }} LoggedGame
  */
 
-/**
- * Return all logged games.
- * @returns {LoggedGame[]}
- */
-export function getGames() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(getStorageKey()))
-    if (!Array.isArray(parsed)) return []
-    return parsed.filter((g) => g && typeof g === 'object' && typeof g.id === 'number').map((g) => ({
-      ...g,
-      rating: typeof g.rating === 'number' ? g.rating : null,
-      review: typeof g.review === 'string' ? g.review : null,
-      reviewedAt: typeof g.reviewedAt === 'string' ? g.reviewedAt : null,
-    }))
-  } catch {
-    return []
+/** Map a Supabase snake_case row back to the camelCase shape the UI expects. */
+function toLoggedGame(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    coverUrl: row.cover_url,
+    releaseYear: row.release_year,
+    status: row.status,
+    addedAt: row.added_at,
+    rating: row.rating ?? null,
+    review: row.review ?? null,
+    reviewedAt: row.reviewed_at ?? null,
   }
 }
 
 /**
- * Add a game to the log. No-ops if the game is already logged.
+ * Return all logged games for the current user, newest first.
+ * @returns {Promise<LoggedGame[]>}
+ */
+export async function getGames() {
+  const { data, error } = await supabase
+    .from('game_logs')
+    .select('*')
+    .order('added_at', { ascending: false })
+  if (error) throw error
+  return (data ?? []).map(toLoggedGame)
+}
+
+/**
+ * Add a game to the log. No-ops if already logged.
  * @param {Game} game
  * @param {GameStatus} status
- * @returns {LoggedGame} The newly added entry.
  */
-export function addGame(game, status) {
+export async function addGame(game, status = 'Want to Play') {
   if (!VALID_STATUSES.has(status)) throw new Error(`Invalid status: ${status}`)
 
-  const games = getGames()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not logged in.')
 
-  const existing = games.find((g) => g.id === game.id)
-  if (existing) return existing
-
-  const entry = {
-    id: game.id,
-    name: game.name,
-    coverUrl: game.coverUrl,
-    releaseYear: game.releaseYear,
-    status,
-    addedAt: new Date().toISOString(),
-    rating: null,
-    review: null,
-    reviewedAt: null,
-  }
-
-  try {
-    localStorage.setItem(getStorageKey(), JSON.stringify([...games, entry]))
-  } catch (err) {
-    throw new Error(`Failed to save game: ${err.message}`)
-  }
-
-  return entry
+  const { error } = await supabase.from('game_logs').upsert(
+    {
+      id: game.id,
+      user_id: user.id,
+      name: game.name,
+      cover_url: game.coverUrl,
+      release_year: game.releaseYear,
+      status,
+    },
+    { onConflict: 'user_id,id', ignoreDuplicates: true }
+  )
+  if (error) throw error
 }
 
 /**
  * Update the status of a logged game.
- * @param {number} id - The game's id.
+ * @param {number} id
  * @param {GameStatus} status
- * @returns {LoggedGame|null} The updated entry, or null if not found.
+ * @returns {Promise<LoggedGame|null>}
  */
-export function updateStatus(id, status) {
+export async function updateStatus(id, status) {
   if (!VALID_STATUSES.has(status)) throw new Error(`Invalid status: ${status}`)
 
-  const games = getGames()
-  let updated = null
-
-  const next = games.map((g) => {
-    if (g.id !== id) return g
-    updated = { ...g, status }
-    return updated
-  })
-
-  if (!updated) return null
-
-  try {
-    localStorage.setItem(getStorageKey(), JSON.stringify(next))
-  } catch (err) {
-    throw new Error(`Failed to update status: ${err.message}`)
-  }
-
-  return updated
+  const { data, error } = await supabase
+    .from('game_logs')
+    .update({ status })
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data ? toLoggedGame(data) : null
 }
 
 /**
  * Update the rating and review of a logged game.
- * @param {number} id - The game's id.
- * @param {number|null} rating - A value from 1–10, or null to clear.
- * @param {string|null} review - Review text, or null to clear.
- * @returns {LoggedGame|null} The updated entry, or null if not found.
+ * @param {number} id
+ * @param {number|null} rating
+ * @param {string|null} review
+ * @returns {Promise<LoggedGame|null>}
  */
-export function updateReview(id, rating, review) {
+export async function updateReview(id, rating, review) {
   if (rating !== null && (!Number.isFinite(rating) || !Number.isInteger(rating) || rating < 1 || rating > 10)) {
     throw new Error(`Invalid rating: ${rating}. Must be an integer 1–10 or null.`)
   }
 
-  const games = getGames()
-  let updated = null
-
-  const next = games.map((g) => {
-    if (g.id !== id) return g
-    updated = { ...g, rating: rating ?? null, review: review ?? null, reviewedAt: new Date().toISOString() }
-    return updated
-  })
-
-  if (!updated) return null
-
-  try {
-    localStorage.setItem(getStorageKey(), JSON.stringify(next))
-  } catch (err) {
-    throw new Error(`Failed to update review: ${err.message}`)
-  }
-
-  return updated
+  const { data, error } = await supabase
+    .from('game_logs')
+    .update({ rating: rating ?? null, review: review ?? null, reviewed_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data ? toLoggedGame(data) : null
 }
 
 /**
  * Remove a game from the log.
- * @param {number} id - The game's id.
- * @returns {boolean} True if a game was removed, false if it wasn't found.
+ * @param {number} id
  */
-export function removeGame(id) {
-  const games = getGames()
-  const next = games.filter((g) => g.id !== id)
-
-  if (next.length === games.length) return false
-
-  try {
-    localStorage.setItem(getStorageKey(), JSON.stringify(next))
-  } catch (err) {
-    throw new Error(`Failed to remove game: ${err.message}`)
-  }
-
-  return true
+export async function removeGame(id) {
+  const { error } = await supabase
+    .from('game_logs')
+    .delete()
+    .eq('id', id)
+  if (error) throw error
 }

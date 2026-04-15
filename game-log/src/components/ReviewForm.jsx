@@ -9,9 +9,9 @@ function ReviewForm({ game, onSave }) {
   const [rating, setRating] = useState(game.rating ?? null)
   const [review, setReview] = useState(game.review ?? '')
 
-  function handleSave() {
+  async function handleSave() {
     try {
-      const updated = updateReview(game.id, rating, review.trim() || null)
+      const updated = await updateReview(game.id, rating, review.trim() || null)
       if (updated) onSave(updated)
     } catch (err) {
       console.error(err)

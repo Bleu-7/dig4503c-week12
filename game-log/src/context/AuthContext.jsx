@@ -1,30 +1,41 @@
-import { createContext, useContext, useState } from 'react'
-import { login as authLogin, logout as authLogout, getCurrentUser } from '@/lib/authService'
-
-/**
- * @typedef {{ user: import('@/lib/authService').SessionUser|null, login: (username: string, password: string) => import('@/lib/authService').SessionUser, logout: () => void }} AuthContextValue
- */
+import { createContext, useContext, useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
 
 const AuthContext = createContext(null)
 
 /**
- * Provides auth state to the component tree.
- * Exposes: user, login(username, password), logout()
- * @param {{ children: React.ReactNode }} props
+ * Provides Supabase auth state to the component tree.
+ * Exposes: user, login(email, password), logout()
  */
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(getCurrentUser)
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  function login(username, password) {
-    const session = authLogin(username, password)
-    setUser(session)
-    return session
+  useEffect(() => {
+    // Restore existing session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+      setLoading(false)
+    })
+
+    // Stay in sync with all auth events (login, logout, token refresh, etc.)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  async function login(email, password) {
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) throw new Error(error.message)
   }
 
-  function logout() {
-    authLogout()
-    setUser(null)
+  async function logout() {
+    await supabase.auth.signOut()
   }
+
+  if (loading) return null
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>
@@ -36,7 +47,6 @@ export function AuthProvider({ children }) {
 /**
  * Returns the current auth context: { user, login, logout }
  * Must be used inside <AuthProvider>.
- * @returns {AuthContextValue}
  */
 export function useAuth() {
   const ctx = useContext(AuthContext)
